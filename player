@@ -1,0 +1,49 @@
+#!/usr/local/bin/python
+import Tkinter as tk
+import pymedia.audio.acodec as acodec
+import pymedia.audio.sound as sound
+import time,os
+
+RES= ( 200, 200 )
+SEEK_SEC= 5
+
+filename="/my/music/radio/spool/105.3fm/20050126loveline.ogg"
+head,ext = os.path.splitext(filename)
+
+dec = acodec.Decoder(ext.replace(".",""))
+f= open( filename, 'rb' )
+br= None
+snd= None
+s= f.read(50000)
+frame = dec.decode(s)
+print ('Opening sound with %d channels (%d bitrate)' %
+       (frame.channels, frame.bitrate))
+snd = sound.Output(frame.sample_rate, frame.channels, sound.AFMT_S16_LE)
+
+while 1:
+    bytes = f.read(512)
+    print "read %s bytes from file" % len(bytes)
+    frame = dec.decode(bytes)
+    if frame:
+        print "play %s bytes, %r" % (len(frame.data),frame)
+        snd.play(frame.data)
+##     for e in ev:
+##         if e.type== pygame.KEYDOWN: 
+##             if e.key== pygame.K_RIGHT:
+##                 # Seek forward
+##                 f.seek( SEEK_SEC* br/ 8, 1 )
+##                 dec.reset()
+##             if e.key== pygame.K_LEFT:
+##                 # Seek forward
+##                 if f.tell()> SEEK_SEC* br/ 8: 
+##                     f.seek( -SEEK_SEC* br/ 8, 1 )
+##                 dec.reset()
+
+##             if e.key== pygame.K_ESCAPE:
+##                 s= ''
+##                 break
+
+    while snd.isPlaying():
+            time.sleep( .05 )
+
+root.mainloop()

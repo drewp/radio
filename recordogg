@@ -1,0 +1,2 @@
+aumix -L
+rec -c 2 -r 44100 -t wav - | oggenc -q 0 -o $1 -

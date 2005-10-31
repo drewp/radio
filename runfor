@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+"""
+todo: quiet mode for crontab
+
+"""
+import mx.DateTime, sys, time, thread, popen2, os
+
+pid = None
+
+def run_forked(command):
+    global pid
+    fork_result = os.fork()
+    if fork_result == 0: # child
+        print "Running", repr(command), command_args
+        command_args.insert(0, command) # this is how execvp wants things,
+                                        # I think
+        os.execvp(command, command_args)
+        finished = 1
+    else:
+        pid = fork_result
+        print "PID:", pid
+
+def wait_for_process_to_finish(pid, poll_period=2):
+    while 1:
+        junk, status = os.waitpid(pid, os.WNOHANG)
+        if not os.WIFEXITED(status):
+            time.sleep(poll_period)
+        else:
+            break
+
+start_time, end_time, command = sys.argv[1:4]
+command_args = sys.argv[4:]
+print `start_time`, `end_time`, `command`, `command_args`
+
+wakeuptime = mx.DateTime.Parser.DateTimeFromString(start_time)
+parsed_end_time = mx.DateTime.Parser.DateTimeFromString(end_time)
+diff = wakeuptime - mx.DateTime.now()
+print "Sleeping", diff, "until start time of", wakeuptime
+print "end time is ",parsed_end_time
+
+if diff.seconds >= 0:
+    # print "Will run command at:", wakeuptime, "(%s)" % diff
+    time.sleep(diff.seconds)
+    # thread.start_new_thread(run_command, (command,))
+    run_forked(command)
+
+    wakeuptime = parsed_end_time
+    diff = wakeuptime - mx.DateTime.now()
+    print "Will kill PID %s at: %s (%s)" % (pid, wakeuptime, diff)
+    time.sleep(diff.seconds)
+    print "Killing time -- kill", pid, "with 15"
+    os.kill(pid, 15) # TODO: parametrize
+
+    while 1:
+        junk, status = os.waitpid(pid, os.WNOHANG)
+        print "status", status
+        if not os.WIFEXITED(status):
+            print "Waiting for process to exit..."
+            time.sleep(1)
+        else:
+            break
+else:
+    raise SystemExit("start time has passed- command was not run")
+
+
+"""
+def run_command(command):
+    command_runner = popen2.Popen4(command)
+
+    global pid, finished
+    pid = command_runner.pid
+
+    while 1:
+        print command_runner.fromchild.read()
+        poll_status = command_runner.poll()
+        if poll_status != -1: # command has completed
+            print "Command finished:", poll_status
+            finished = 1
+            sys.exit(0)
+"""
+

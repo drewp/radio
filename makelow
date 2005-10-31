@@ -1,0 +1,1 @@
+ogg123 -d raw -f - $1 | lame -r -x -s 44.1 -m s -b 40 - low/$1:r.mp3

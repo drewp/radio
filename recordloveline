@@ -1,0 +1,13 @@
+#!/bin/zsh
+aumix -L > /dev/null
+BASE=/my/music/radio/spool/105.3fm/`date +%Y%m%d`loveline
+
+# already-running recorders make this write nothing to disk, even
+# though it will otherwise seem to work. maybe i should kill all pids
+# of `fusers /dev/dsp`
+
+# using sox instead of rec seems to kill better. before, i was getting
+# lots of leftover sox processes
+/my/proj/radio/runfor 22:00 23:59:59.99 sox -t ossdsp -c 2 -r 44100 -w /dev/dsp -w ${BASE}.wav > /dev/null
+
+oggenc --quiet -q 0 -o ${BASE}.ogg ${BASE}.wav && rm ${BASE}.wav
